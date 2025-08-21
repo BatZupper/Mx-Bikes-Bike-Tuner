@@ -3,25 +3,28 @@ def parse_cfg(text):
     stack = [root]
     current = root
 
-    lines = text.splitlines()
-    for line in lines:
-        line = line.strip()
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
         if not line or line.startswith("//") or line.startswith(";"):
             continue
 
         if line.endswith("{"):
             key = line[:-1].strip()
             new_block = {}
-            current[key] = new_block
+            # Se la chiave esiste già come dict, usiamola; altrimenti creiamo
+            if key in current and isinstance(current[key], dict):
+                new_block = current[key]
+            else:
+                current[key] = new_block
             stack.append(new_block)
             current = new_block
 
         elif line == "}":
-            stack.pop()
-            if stack:
+            if len(stack) > 1:
+                stack.pop()
                 current = stack[-1]
             else:
-                current = root
+                current = root  # fallback di sicurezza
 
         elif "=" in line:
             k, v = [p.strip() for p in line.split("=", 1)]
